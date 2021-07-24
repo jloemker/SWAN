@@ -13,6 +13,22 @@ import math as m
 plt.style.use([hep.style.ROOT, hep.style.firamath])
 plt.style.use(hep.style.CMS)
 
+def InitData(data):
+    for k in ['pt','eta','phi','m','t','vz']:
+        data['mu1_'+k]=[]
+        data['mu2_'+k]=[]
+    for k in ['vz','xi']:
+        data['pr1_'+k]=[]
+        data['pr2_'+k]=[]
+    for k in ['pt2','t','z']:
+        data['pr_vtx_'+k]=[]
+    # add event kinematics
+        data['mll']=[]
+        data['yll']=[]
+        data['mpp']=[]
+        data['ypp']=[]
+        data['evt_t0']=[]
+    return data
 
 def SelMu(muons):
     mu = muons
