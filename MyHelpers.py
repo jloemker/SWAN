@@ -47,9 +47,10 @@ def SelProtons(proton_from_event):
     proton_neg_idx=np.where(ak.to_numpy((pr.genproton_pz<0) & (pr.genproton_pz>-6999) ))[0]
     proton_pos_idx=np.where(ak.to_numpy((pr.genproton_pz>0) & (pr.genproton_pz< 6999) ))[0]
     #create list of all possible pair combinations between list 1 and list 2:
-    #proton_pairs_idx=np.array(np.meshgrid(proton_pos_idx,proton_neg_idx)).T.reshape(-1,2)
-    proton_idx1 = proton_pos_idx[0]   
-    proton_idx2 = proton_neg_idx[0]
+    proton_pairs_idx=np.array(np.meshgrid(proton_pos_idx,proton_neg_idx)).T.reshape(-1,2)    
+    proton_idx1, proton_idx2 = proton_pairs_idx[0]
+    #proton_idx1 = proton_pos_idx[0]   
+    #proton_idx2 = proton_neg_idx[0]
     return proton_idx1, proton_idx2
 
 def Fill_mu(data,muons,mu1_idx,mu2_idx):
