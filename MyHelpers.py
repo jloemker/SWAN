@@ -6,12 +6,7 @@ import awkward
 import ROOT
 import scipy.stats as stats #this one used to do fits
 import matplotlib.pyplot as plt
-from tqdm import tqdm #this is a fancy feature to make a progress bar as the loop proceed
 import awkward as ak
-import math as m
-#to make the plots in CMS style execute this line
-plt.style.use([hep.style.ROOT, hep.style.firamath])
-plt.style.use(hep.style.CMS)
 
 def InitData(data):
     for k in ['pt','eta','phi','m','t','vz']:
@@ -42,18 +37,7 @@ def SelMu(muons):
             mu2_idx=i_mu
     return mu1_idx, mu2_idx
 
-def SelProtons(proton_from_event):
-    pr=proton_from_event
-    proton_neg_idx=np.where(ak.to_numpy((pr.genproton_pz<0) & (pr.genproton_pz>-6999) ))[0]
-    proton_pos_idx=np.where(ak.to_numpy((pr.genproton_pz>0) & (pr.genproton_pz< 6999) ))[0]
-    #create list of all possible pair combinations between list 1 and list 2:
-    proton_pairs_idx=np.array(np.meshgrid(proton_pos_idx,proton_neg_idx)).T.reshape(-1,2)    
-    proton_idx1, proton_idx2 = proton_pairs_idx[0]
-    #proton_idx1 = proton_pos_idx[0]   
-    #proton_idx2 = proton_neg_idx[0]
-    return proton_idx1, proton_idx2
-
-def Fill_mu(data,muons,mu1_idx,mu2_idx):
+def GiveMu(muons, mu1_idx, mu2_idx):
     mu = muons
     mu1=ROOT.Math.PtEtaPhiMVector(mu.pfcand_pt[mu1_idx],
                                   mu.pfcand_eta[mu1_idx],
@@ -62,15 +46,52 @@ def Fill_mu(data,muons,mu1_idx,mu2_idx):
     mu2=ROOT.Math.PtEtaPhiMVector(mu.pfcand_pt[mu2_idx],
                                   mu.pfcand_eta[mu2_idx],
                                   mu.pfcand_phi[mu2_idx],
-                                  mu.pfcand_mass[mu2_idx])   
+                                  mu.pfcand_mass[mu2_idx]) 
+    return mu1, mu2
+
+def SmearProtonMomentum(proton_from_event):
+    XI_RES=0.02 # use 2% for now
+    pr=proton_from_event
+    xi_smear = np.random.normal(0,abs(ak.to_numpy(pr.genproton_xi))*XI_RES)
+    pr.genproton_xi = pr.genproton_xi + xi_smear 
+    pr.genproton_pz = pr.genproton_pz + 7000*xi_smear 
+    #return corrected array of protons
+    return pr
+
+def SelProtons(proton_from_event, mu1, mu2):
+    s = 14000
+    PZ_MIN=4990; PZ_MAX=6977
+    pr=proton_from_event
+    # smearing proton momenta
+    SmearProtonMomentum(pr)
+    # accepted proton indices
+    proton_neg_idx_acc=np.where(ak.to_numpy((pr.genproton_pz<-PZ_MIN) & (pr.genproton_pz>-PZ_MAX) ))[0]
+    proton_pos_idx_acc=np.where(ak.to_numpy((pr.genproton_pz>PZ_MIN) & (pr.genproton_pz< PZ_MAX) ))[0]
+    # accepted protons
+    proton1 = pr[proton_pos_idx_acc]
+    proton2 = pr[proton_neg_idx_acc]
+    # di-muon kinematics
+    xi_dimu_plus = (mu1.Pt()*np.exp(mu1.Eta())+mu2.Pt()*np.exp(mu2.Eta())) / s
+    xi_dimu_minus = (mu1.Pt()*np.exp(-mu1.Eta())+mu2.Pt()*np.exp(-mu2.Eta())) / s
+    #get protons with closest xi values to the reconstructed muons from the list of accepted protons
+    proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-xi_dimu_plus)).argmin()
+    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-xi_dimu_minus)).argmin()
+    # get the proton index for the full list of protons:
+    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]
+    proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
+    # return proton indices
+    return proton_idx1, proton_idx2
+
+def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
+    mu = mu
     data['mu1_pt'].append(mu1.Pt())
-    data['mu1_eta'].append(mu1.Eta())
+    data['mu1_eta'].append(mu1.Rapidity())
     data['mu1_phi'].append(mu1.Phi())
     data['mu1_m'].append(mu1.M())
     data['mu1_t'].append(mu.pfcand_t[mu1_idx])
     data['mu1_vz'].append(mu.pfcand_vz[mu1_idx])
     data['mu2_pt'].append(mu2.Pt())
-    data['mu2_eta'].append(mu2.Eta())
+    data['mu2_eta'].append(mu2.Rapidity())
     data['mu2_phi'].append(mu2.Phi())
     data['mu2_m'].append(mu2.M())
     data['mu2_t'].append(mu.pfcand_t[mu2_idx])
@@ -78,7 +99,7 @@ def Fill_mu(data,muons,mu1_idx,mu2_idx):
     #calculate invariant mass from two muons:
     data['mll'].append((mu1+mu2).M())
     data['yll'].append((mu1+mu2).Rapidity())
-    
+
 def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     pr=protons
     #add proton information
@@ -99,3 +120,4 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     #add event info variables:
     ev=event
     data['evt_t0'].append(ev.genvtx_t0)
+    
