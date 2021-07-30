@@ -68,8 +68,9 @@ def SmearNegProtonMomentum(proton_from_event):
     return pr
 
 def SelProtons(proton_from_event, mu1, mu2):
-    s = 14000
-    PZ_MIN=4990; PZ_MAX=6977
+    sqrt_s = 14000
+    #4990
+    PZ_MIN=4990; PZ_MAX=6999.99
     pr=proton_from_event
     # accepted proton indices
     proton_neg_idx_acc=np.where(ak.to_numpy((pr.genproton_pz<-PZ_MIN) & (pr.genproton_pz>-PZ_MAX) ))[0]
@@ -79,18 +80,21 @@ def SelProtons(proton_from_event, mu1, mu2):
     proton2 = pr[proton_neg_idx_acc]
     # smearing proton momenta
     SmearPosProtonMomentum(proton1)
-    SmearNegProtonMomentum(proton2)
+    SmearNegProtonMomentum(proton2)    
     # di-muon kinematics
-    xi_dimu_plus = (mu1.Pt()*np.exp(mu1.Eta())+mu2.Pt()*np.exp(mu2.Eta())) / s
-    xi_dimu_minus = (mu1.Pt()*np.exp(-mu1.Eta())+mu2.Pt()*np.exp(-mu2.Eta())) / s
+    xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
+    xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s) 
     #get protons with closest xi values to the reconstructed muons from the list of accepted protons
     proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-xi_dimu_plus)).argmin()
-    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-xi_dimu_minus)).argmin()#actually -
+    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-xi_dimu_minus)).argmin()
     # get the proton index for the full list of protons:
-    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]
+    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]   
     proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
-    # return proton indices
+
+    # return proton indices   
     return proton_idx1, proton_idx2
+
+
 
 def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
     mu = mu
