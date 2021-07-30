@@ -48,6 +48,8 @@ def GiveMu(muons, mu1_idx, mu2_idx):
                                   mu.pfcand_phi[mu2_idx],
                                   mu.pfcand_mass[mu2_idx]) 
     return mu1, mu2
+
+
 def SmearPosProtonMomentum(proton_from_event):
     XI_RES=0.02 # use 2% for now
     pr=proton_from_event
