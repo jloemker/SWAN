@@ -8,6 +8,8 @@ import scipy.stats as stats #this one used to do fits
 import matplotlib.pyplot as plt
 import awkward as ak
 
+sqrt_s = 14000
+
 def InitData(data):
     for k in ['pt','eta','phi','m','t','vz']:
         data['mu1_'+k]=[]
@@ -25,18 +27,6 @@ def InitData(data):
         data['evt_t0']=[]
     return data
 
-def SelMu(muons):
-    mu = muons
-    mu1_idx=-1; mu2_idx=-1; 
-    for i_mu, pt in enumerate(mu.pfcand_pt):
-        if pt<25: continue
-        if mu1_idx<0 or pt>mu.pfcand_pt[mu1_idx]:
-            mu2_idx=mu1_idx
-            mu1_idx=i_mu
-        elif mu2_idx<0 or pt>mu.pfcand_pt[mu2_idx]:
-            mu2_idx=i_mu
-    return mu1_idx, mu2_idx
-
 def GiveMu(muons, mu1_idx, mu2_idx):
     mu = muons
     mu1=ROOT.Math.PtEtaPhiMVector(mu.pfcand_pt[mu1_idx],
@@ -48,6 +38,24 @@ def GiveMu(muons, mu1_idx, mu2_idx):
                                   mu.pfcand_phi[mu2_idx],
                                   mu.pfcand_mass[mu2_idx]) 
     return mu1, mu2
+
+
+def SelMu(muons):
+    mu = muons
+    mu1_idx=-1; mu2_idx=-1; 
+    for i_mu, pt in enumerate(mu.pfcand_pt):
+        if pt<25: continue        
+        if mu1_idx<0 or pt>mu.pfcand_pt[mu1_idx]:
+            mu2_idx=mu1_idx
+            mu1_idx=i_mu
+        elif mu2_idx<0 or pt>mu.pfcand_pt[mu2_idx]:
+            mu2_idx=i_mu
+        mu1, mu2 = GiveMu(mu, mu1_idx, mu2_idx)
+        xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
+        xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s)
+    #additional cut
+        if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue
+    return mu1_idx, mu2_idx
 
 
 def SmearPosProtonMomentum(proton_from_event):
@@ -69,8 +77,6 @@ def SmearNegProtonMomentum(proton_from_event):
     return pr
 
 def SelProtons(proton_from_event, mu1, mu2):
-    sqrt_s = 14000
-    #4990
     PZ_MIN=4990; PZ_MAX=6999.99
     pr=proton_from_event
     # accepted proton indices
