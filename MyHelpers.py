@@ -50,61 +50,37 @@ def SelMu(muons):
             mu1_idx=i_mu
         elif mu2_idx<0 or pt>mu.pfcand_pt[mu2_idx]:
             mu2_idx=i_mu
-        mu1, mu2 = GiveMu(mu, mu1_idx, mu2_idx)
-        xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
-        xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s)
-    #additional cut
-        if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue
     return mu1_idx, mu2_idx
 
 
-def SmearPosProtonMomentum(proton_from_event):
+def SmearProtonMomentum(proton_from_event):
     XI_RES=0.02 # use 2% for now
     pr=proton_from_event
-    xi_smear = np.random.normal(0,abs(ak.to_numpy(pr.genproton_xi))*XI_RES)
+    xi_smear = np.random.normal(0,ak.to_numpy(pr.genproton_xi)*XI_RES)
     pr.genproton_xi = pr.genproton_xi + xi_smear
     pr.genproton_pz = pr.genproton_pz + 7000*xi_smear         
     #return corrected array of protons
     return pr
 
-def SmearNegProtonMomentum(proton_from_event):
-    XI_RES=0.02 # use 2% for now
-    pr=proton_from_event
-    xi_smear = np.random.normal(0,abs(ak.to_numpy(pr.genproton_xi))*XI_RES)
-    pr.genproton_xi = pr.genproton_xi - xi_smear
-    pr.genproton_pz = pr.genproton_pz - 7000*xi_smear         
-    #return corrected array of protons
-    return pr
-
-def SelProtons(proton_from_event, mu1, mu2):
+def SelProtons(proton_from_event, mu1, mu2, plus, minus):
     PZ_MIN=4990; PZ_MAX=6999.99
     pr=proton_from_event
+    # smearing proton momenta
+    SmearProtonMomentum(pr)
     # accepted proton indices
     proton_neg_idx_acc=np.where(ak.to_numpy((pr.genproton_pz<-PZ_MIN) & (pr.genproton_pz>-PZ_MAX) ))[0]
     proton_pos_idx_acc=np.where(ak.to_numpy((pr.genproton_pz>PZ_MIN) & (pr.genproton_pz< PZ_MAX) ))[0]
     # accepted protons
     proton1 = pr[proton_pos_idx_acc]
     proton2 = pr[proton_neg_idx_acc]
-    # smearing proton momenta
-    SmearPosProtonMomentum(proton1)
-    SmearNegProtonMomentum(proton2)    
-    # di-muon kinematics
-    xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
-    xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s)
-    #additional cut
-    if((xi_dimu_plus>0.0032) == True & (xi_dimu_minus>0.0032) == True):
     #get protons with closest xi values to the reconstructed muons from the list of accepted protons
-        proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-xi_dimu_plus)).argmin()
-        proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-xi_dimu_minus)).argmin()
+    proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-plus)).argmin()
+    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-minus)).argmin()
     # get the proton index for the full list of protons:
-        proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]   
-        proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
-    else:
-        proton_idx1 = -1
-        proton_idx2 = -1
-    # return proton indices   
+    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]   
+    proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
+    #return proton indices
     return proton_idx1, proton_idx2
-
 
 
 def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
@@ -127,6 +103,8 @@ def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
 
 def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     pr=protons
+    proton1 = pr[pr1_idx]
+    proton2 = pr[pr2_idx]
     #add proton information
     xi1=pr.genproton_xi[pr1_idx]
     xi2=pr.genproton_xi[pr2_idx]
@@ -135,7 +113,7 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     data['pr2_xi'].append(xi2)
     data['pr2_vz'].append(pr.genproton_vz[pr2_idx])
     #calculate invariant mass from two muons:
-    data['mpp'].append(14000.*np.sqrt(xi1*xi2))
+    data['mpp'].append(sqrt_s.*np.sqrt(xi1*xi2))
     data['ypp'].append((1/2)*np.log(xi1/xi2))
     #add primary vertex info
     vx=vertex
@@ -145,4 +123,3 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     #add event info variables:
     ev=event
     data['evt_t0'].append(ev.genvtx_t0)
-    
