@@ -9,12 +9,14 @@ import matplotlib.pyplot as plt
 import awkward as ak
 
 sqrt_s = 14000
+zpps = 2.34e4 #in cm
+c = 29.9792#in cm/ns
 
 def InitData(data):
     for k in ['pt','eta','phi','m','t','vz']:
         data['mu1_'+k]=[]
         data['mu2_'+k]=[]
-    for k in ['vz','xi']:
+    for k in ['vz','xi','t']:
         data['pr1_'+k]=[]
         data['pr2_'+k]=[]
     for k in ['pt2','t','z']:
@@ -25,6 +27,11 @@ def InitData(data):
         data['mpp']=[]
         data['ypp']=[]
         data['evt_t0']=[]
+    #add smeared times
+        data['pr1_20_t'] = []
+        data['pr2_20_t'] = []
+        data['pr1_60_t'] = []
+        data['pr2_60_t'] = []
     return data
 
 def GiveMu(muons, mu1_idx, mu2_idx):
@@ -52,7 +59,7 @@ def SelMu(muons):
             mu2_idx=i_mu
     return mu1_idx, mu2_idx
 
-
+    
 def SmearProtonMomentum(proton_from_event):
     XI_RES=0.02 # use 2% for now
     pr=proton_from_event
@@ -61,9 +68,9 @@ def SmearProtonMomentum(proton_from_event):
     pr.genproton_pz = pr.genproton_pz + 7000*xi_smear         
     #return corrected array of protons
     return pr
-
+    
 def SelProtons(proton_from_event, mu1, mu2, plus, minus):
-    PZ_MIN=4990; PZ_MAX=6999.99
+    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
     pr=proton_from_event
     # smearing proton momenta
     SmearProtonMomentum(pr)
@@ -73,6 +80,8 @@ def SelProtons(proton_from_event, mu1, mu2, plus, minus):
     # accepted protons
     proton1 = pr[proton_pos_idx_acc]
     proton2 = pr[proton_neg_idx_acc]
+    if (len(proton_pos_idx_acc) == 0 or len(proton_neg_idx_acc) ==0 ):
+        return -1, -1
     #get protons with closest xi values to the reconstructed muons from the list of accepted protons
     proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-plus)).argmin()
     proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-minus)).argmin()
@@ -81,7 +90,6 @@ def SelProtons(proton_from_event, mu1, mu2, plus, minus):
     proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
     #return proton indices
     return proton_idx1, proton_idx2
-
 
 def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
     mu = mu
@@ -101,6 +109,7 @@ def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
     data['mll'].append((mu1+mu2).M())
     data['yll'].append((mu1+mu2).Rapidity())
 
+
 def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     pr=protons
     proton1 = pr[pr1_idx]
@@ -113,7 +122,7 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     data['pr2_xi'].append(xi2)
     data['pr2_vz'].append(pr.genproton_vz[pr2_idx])
     #calculate invariant mass from two muons:
-    data['mpp'].append(sqrt_s.*np.sqrt(xi1*xi2))
+    data['mpp'].append(sqrt_s*np.sqrt(xi1*xi2))
     data['ypp'].append((1/2)*np.log(xi1/xi2))
     #add primary vertex info
     vx=vertex
@@ -123,3 +132,23 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     #add event info variables:
     ev=event
     data['evt_t0'].append(ev.genvtx_t0)
+def Sig_time(data, ev, pr, pr1_idx, pr2_idx):
+    data['pr1_t'].append(ev.genvtx_t0 + (  zpps - pr.genproton_vz[pr1_idx])/c )
+    data['pr2_t'].append(ev.genvtx_t0 + (  zpps + pr.genproton_vz[pr2_idx])/c ) 
+    
+def Bg_time(data, pr, pr1_idx, pr2_idx):
+    data['pr1_t'].append(np.random.normal(0,0.19) + (zpps - pr.genproton_vz[pr1_idx]) / c)
+    data['pr2_t'].append(np.random.normal(0,0.19) + (zpps + pr.genproton_vz[pr2_idx]) / c)
+        
+def SmearProtonTimes(pr_t, res):   
+    pr_t = pr_t + np.random.normal(0,res*np.ones(len(pr_t)))
+    #return corrected array of protons
+    return pr_t
+
+def Fill_smeared_pr_t(data): 
+    #add smeared times
+    data['pr1_20_t'] = SmearProtonTimes(data['pr1_t'], 0.020)
+    data['pr2_20_t'] = SmearProtonTimes(data['pr2_t'], 0.020)
+    data['pr1_60_t'] = SmearProtonTimes(data['pr1_t'], 0.060)
+    data['pr2_60_t'] = SmearProtonTimes(data['pr2_t'], 0.060)
+ 
