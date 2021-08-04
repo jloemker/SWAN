@@ -32,6 +32,8 @@ def InitData(data):
         data['pr2_20_t'] = []
         data['pr1_60_t'] = []
         data['pr2_60_t'] = []
+        data['pr1_50_t'] = []
+        data['pr2_50_t'] = []
     return data
 
 def GiveMu(muons, mu1_idx, mu2_idx):
@@ -151,4 +153,6 @@ def Fill_smeared_pr_t(data):
     data['pr2_20_t'] = SmearProtonTimes(data['pr2_t'], 0.020)
     data['pr1_60_t'] = SmearProtonTimes(data['pr1_t'], 0.060)
     data['pr2_60_t'] = SmearProtonTimes(data['pr2_t'], 0.060)
+    data['pr1_50_t'] = SmearProtonTimes(data['pr1_t'], 0.050)
+    data['pr2_50_t'] = SmearProtonTimes(data['pr2_t'], 0.050)
  
