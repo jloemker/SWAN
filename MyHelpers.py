@@ -139,8 +139,8 @@ def Sig_time(data, ev, pr, pr1_idx, pr2_idx):
     data['pr2_t'].append(ev.genvtx_t0 + (  zpps + pr.genproton_vz[pr2_idx])/c ) 
     
 def Bg_time(data, pr, pr1_idx, pr2_idx):
-    data['pr1_t'].append(np.random.normal(0,0.19) + (zpps - pr.genproton_vz[pr1_idx]) / c)
-    data['pr2_t'].append(np.random.normal(0,0.19) + (zpps + pr.genproton_vz[pr2_idx]) / c)
+    data['pr1_t'].append(np.random.normal(0,0.019) + (zpps - pr.genproton_vz[pr1_idx]) / c)#corrected the event time for bg
+    data['pr2_t'].append(np.random.normal(0,0.019) + (zpps + pr.genproton_vz[pr2_idx]) / c)
         
 def SmearProtonTimes(pr_t, res):   
     pr_t = pr_t + np.random.normal(0,res*np.ones(len(pr_t)))
@@ -155,4 +155,3 @@ def Fill_smeared_pr_t(data):
     data['pr2_60_t'] = SmearProtonTimes(data['pr2_t'], 0.060)
     data['pr1_50_t'] = SmearProtonTimes(data['pr1_t'], 0.050)
     data['pr2_50_t'] = SmearProtonTimes(data['pr2_t'], 0.050)
- 
