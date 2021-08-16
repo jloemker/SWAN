@@ -1,6 +1,7 @@
 # CERN Summer Project 2021
 
 The project contains a few notebooks to analyze CMS-PPS data in view of the future HL-LHC project.
+The project began with the UpRoot4_example.ipyn and the Exploration-notebook.ipyn . In the Analyse_* notebooks been used to find the best dataframes and selection cuts. The final results are created with the Final_Plots.ipyn and Analysis_Error.ipyn. The StatisticTools.py includes the "statistical" treatment and the concrete dataframe construction - it uses MyHelper.py for that.
 
 ## Recommended way to run the exercise (SWAN)
 [![SWAN](https://swanserver.web.cern.ch/swanserver/images/badge_swan_white_150.png)](https://cern.ch/swanserver/cgi-bin/go/?projurl=https://gitlab.cern.ch/mpitt/cern-summer-project-2021.git)
