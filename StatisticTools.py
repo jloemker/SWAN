@@ -49,6 +49,10 @@ def fit_t(sig,res):
     return sigma_t  
     
 def full_selection(data,res, sigma_m, sigma_y,sigma_vz,sigma_t):
+    t = []
+    vz = []
+    y = []
+    m = []
     acc = 0
     #kinematics
     data_m = (data['mpp']-data['mll']) 
@@ -58,7 +62,8 @@ def full_selection(data,res, sigma_m, sigma_y,sigma_vz,sigma_t):
     p2_t = data['pr2_'+str(res)+'_t'].values    
     mu1_t = data['mu1_t'].values 
     mu2_t = data['mu2_t'].values 
-    data_t = abs((( p1_t + p2_t) - 2*zpps/c)/2 -  (mu1_t+mu2_t)/2 )
+    t_pp = (( p1_t + p2_t) - 2*zpps/c)/2
+    data_t = abs(t_pp -  (mu1_t+mu2_t)/2 )
     #position
     pp_vz = - (data['pr1_'+str(res)+'_t'].values - data['pr2_'+str(res)+'_t'].values)*c/2 
     vz_4D = data['pr_vtx_z'].values
@@ -69,6 +74,10 @@ def full_selection(data,res, sigma_m, sigma_y,sigma_vz,sigma_t):
             if data_vz[i] < abs(2*sigma_vz):           
                 if data_y[i] < abs(2*sigma_y*data['yll'][i]):
                     if data_m[i] < abs(2*sigma_m*data['mll'][i]):
+                        t = np.append(t, t_pp[i])
+                        vz = np.append(vz, pp_vz[i])
+                        y = np.append(y, data['ypp'][i])
+                        m = np.append(m, data['mpp'][i])
                         acc = acc+1
     acc_rate = acc/len(data_t)
 #    print('number of unselected events:')
@@ -77,7 +86,7 @@ def full_selection(data,res, sigma_m, sigma_y,sigma_vz,sigma_t):
 #    print(acc)
 #    print('acceptance rate:')
 #    print(acc_rate)
-    return acc, len(data_t)
+    return acc, len(data_t), t, vz, y, m
 
     
 def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_vertices, bg_event_info):
@@ -136,6 +145,7 @@ def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_ver
         pr=bg_protons[i]
         # smearing and selecting protons
         pr1_idx, pr2_idx = mh.SelProtons(pr,mu1,mu2, xi_dimu_plus, xi_dimu_minus)
+        if pr1_idx<0 or pr2_idx<0: continue
         #if pr1_idx<0 or pr2_idx<0: continue
         vx = bg_vertices[i]
         ev = bg_event_info[i]

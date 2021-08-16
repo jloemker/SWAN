@@ -93,6 +93,52 @@ def SelProtons(proton_from_event, mu1, mu2, plus, minus):
     #return proton indices
     return proton_idx1, proton_idx2
 
+
+def SelSigProtons(proton_from_event, mu1, mu2, plus, minus):
+    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    pr=proton_from_event
+    # smearing proton momenta
+    #SmearProtonMomentum(pr)
+    # accepted proton indices
+    proton_neg_idx_acc=np.where(ak.to_numpy((pr.genproton_ispu==0) & (pr.genproton_pz<-PZ_MIN) & (pr.genproton_pz>-PZ_MAX) ))[0]
+    proton_pos_idx_acc=np.where(ak.to_numpy((pr.genproton_ispu==0) & (pr.genproton_pz>PZ_MIN) & (pr.genproton_pz< PZ_MAX) ))[0]
+    # accepted protons
+    proton1 = pr[proton_pos_idx_acc]
+    proton2 = pr[proton_neg_idx_acc]
+    if (len(proton_pos_idx_acc) == 0 or len(proton_neg_idx_acc) ==0 ):
+        return -1, -1
+    #get protons with closest xi values to the reconstructed muons from the list of accepted protons
+    proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-plus)).argmin()
+    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-minus)).argmin()
+    # get the proton index for the full list of protons:
+    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]   
+    proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
+    #return proton indices
+    return proton_idx1, proton_idx2
+    
+def SelPuProtons(proton_from_event, mu1, mu2, plus, minus):
+    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    pr=proton_from_event
+    # smearing proton momenta
+    #SmearProtonMomentum(pr)
+    # accepted proton indices
+    proton_neg_idx_acc=np.where(ak.to_numpy((pr.genproton_ispu==1) & (pr.genproton_pz<-PZ_MIN) & (pr.genproton_pz>-PZ_MAX) ))[0]
+    proton_pos_idx_acc=np.where(ak.to_numpy((pr.genproton_ispu==1) & (pr.genproton_pz>PZ_MIN) & (pr.genproton_pz< PZ_MAX) ))[0]
+    # accepted protons
+    proton1 = pr[proton_pos_idx_acc]
+    proton2 = pr[proton_neg_idx_acc]
+    if (len(proton_pos_idx_acc) == 0 or len(proton_neg_idx_acc) ==0 ):
+        return -1, -1
+    #get protons with closest xi values to the reconstructed muons from the list of accepted protons
+    proton_idx1_acc = ak.to_numpy(abs(proton1.genproton_xi-plus)).argmin()
+    proton_idx2_acc = ak.to_numpy(abs(proton2.genproton_xi-minus)).argmin()
+    # get the proton index for the full list of protons:
+    proton_idx1 = proton_pos_idx_acc[proton_idx1_acc]   
+    proton_idx2 = proton_neg_idx_acc[proton_idx2_acc]
+    #return proton indices
+    return proton_idx1, proton_idx2
+
+    
 def Fill_mu(data, mu, mu1, mu2,mu1_idx,mu2_idx):
     mu = mu
     data['mu1_pt'].append(mu1.Pt())
