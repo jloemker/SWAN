@@ -72,7 +72,10 @@ def SmearProtonMomentum(proton_from_event):
     return pr
     
 def SelProtons(proton_from_event, mu1, mu2, plus, minus):
-    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    #Station 1-3 scenario 0.0189−0.0095 
+    PZ_MIN=4990; PZ_MAX=(1 - 0.01)*7000 
+    #Station 1-4 scenario
+    #PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
     pr=proton_from_event
     # smearing proton momenta
     SmearProtonMomentum(pr)
@@ -95,7 +98,9 @@ def SelProtons(proton_from_event, mu1, mu2, plus, minus):
 
 
 def SelSigProtons(proton_from_event, mu1, mu2, plus, minus):
-    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    #if((xi_dimu_plus<0.01) == True & (xi_dimu_minus<0.01) == True): continue 
+    #PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    PZ_MIN=4990; PZ_MAX=(1 - 0.01)*7000
     pr=proton_from_event
     # smearing proton momenta
     #SmearProtonMomentum(pr)
@@ -117,7 +122,9 @@ def SelSigProtons(proton_from_event, mu1, mu2, plus, minus):
     return proton_idx1, proton_idx2
     
 def SelPuProtons(proton_from_event, mu1, mu2, plus, minus):
-    PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    #if((xi_dimu_plus<0.01) == True & (xi_dimu_minus<0.01) == True): continue 
+    #PZ_MIN=4990; PZ_MAX=(1 - 0.0032)*7000
+    PZ_MIN=4990; PZ_MAX=(1 - 0.01)*7000
     pr=proton_from_event
     # smearing proton momenta
     #SmearProtonMomentum(pr)
@@ -180,6 +187,7 @@ def Fill_pr(data,protons,pr1_idx,pr2_idx,vertex,event):
     #add event info variables:
     ev=event
     data['evt_t0'].append(ev.genvtx_t0)
+    
 def Sig_time(data, ev, pr, pr1_idx, pr2_idx):
     data['pr1_t'].append(ev.genvtx_t0 + (  zpps - pr.genproton_vz[pr1_idx])/c )
     data['pr2_t'].append(ev.genvtx_t0 + (  zpps + pr.genproton_vz[pr2_idx])/c ) 

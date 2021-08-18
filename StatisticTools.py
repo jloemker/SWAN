@@ -95,7 +95,7 @@ def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_ver
     mh.InitData(sig_data)
     #loop over all events for the signal
     N = len(muons)
-    for i in tqdm(range(N)): 
+    for i in range(N): 
         #find index of two highest pT muons with pT > 25 GeV
         mu=muons[i]
         mu1_idx, mu2_idx = mh.SelMu(mu)            
@@ -106,8 +106,11 @@ def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_ver
         if (mu.pfcand_t[mu1_idx]<-80 or mu.pfcand_t[mu2_idx]<-80): continue
         xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
         xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s)
-        #additional cut
-        if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue   
+        #additional cut scenario 1-3
+        #0.0189−0.0095
+        if((xi_dimu_plus<0.01) == True & (xi_dimu_minus<0.01) == True): continue 
+        #additional cut scenario 1-4
+        #if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue   
         # find two signal protons:
         pr=protons[i]
         # smearing and selecting protons
@@ -128,7 +131,7 @@ def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_ver
     mh.InitData(bg_data)
     #loop over all events for the background
     n = len(bg_muons)
-    for i in tqdm(range(n)): 
+    for i in range(n): 
         #find index of two highest pT muons with pT > 25 GeV
         mu=bg_muons[i]
         mu1_idx, mu2_idx = mh.SelMu(mu)    
@@ -139,14 +142,16 @@ def create_frame(muons,protons,vertices, event_info, bg_muons,bg_protons, bg_ver
         if (mu.pfcand_t[mu1_idx]<-80 or mu.pfcand_t[mu2_idx]<-80): continue
         xi_dimu_plus = ((mu1.Pt()*np.exp(mu1.Rapidity())+mu2.Pt()*np.exp(mu2.Rapidity())) / sqrt_s) 
         xi_dimu_minus =((mu1.Pt()*np.exp(-mu1.Rapidity())+mu2.Pt()*np.exp(-mu2.Rapidity())) / sqrt_s)
-        #additional cut
-        if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue 
+        #additional cut scenario 1-3
+        #0.0189−0.0095
+        if((xi_dimu_plus<0.01) == True & (xi_dimu_minus<0.01) == True): continue 
+        #additional cut scenario 1-4
+        #if((xi_dimu_plus<0.0032) == True & (xi_dimu_minus<0.0032) == True): continue 
         # find two signal protons:
         pr=bg_protons[i]
         # smearing and selecting protons
         pr1_idx, pr2_idx = mh.SelProtons(pr,mu1,mu2, xi_dimu_plus, xi_dimu_minus)
         if pr1_idx<0 or pr2_idx<0: continue
-        #if pr1_idx<0 or pr2_idx<0: continue
         vx = bg_vertices[i]
         ev = bg_event_info[i]
         #Filling muon and proton events
